@@ -1,0 +1,18 @@
+data_dir: data/
+data_date: '2020-10-25'
+model:
+  encoder:
+    __target__: nero.collections.common.mlp.MultiLayerPerceptron
+    hidden_size: 256
+    num_classes: 256
+    activation: relu
+    log_softmax: false
+  decoder:
+    __target__: nero.collections.common.mlp.MultiLayerPerceptron
+    hidden_size: 256
+    num_classes: 256
+    activation: relu
+    log_softmax: false
+  latent_dim: 2
+num_workers: 1
+batch_size: 16
