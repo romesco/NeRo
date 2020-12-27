@@ -26,23 +26,6 @@ from dataclasses import dataclass
 from typing import Any, Optional, Dict
 from omegaconf import MISSING
 
-from nero.collections.example.datasets.mnist import MNISTDatasetConfig
-from hydra_configs.torch.utils.data.dataloader import DataLoaderConf
-from hydra_configs.torch.nn.modules.loss import NLLLossConf
-from hydra_configs.torch.optim import AdamConf
-
-@dataclass
-class MNISTLeNet5Conf():
-    """
-    Structured config for LeNet-5 model class - that also contains parameters of dataset and dataloader.
-    """
-
-    dataset: MNISTDatasetConfig = MNISTDatasetConfig(width=32, height=32)
-    dataloader: DataLoaderConf = DataLoaderConf(batch_size=64, shuffle=True)
-    module: Any = None
-    loss: Any = NLLLossConf()
-    optim: Any = AdamConf()
-
 class MNISTLeNet5(pl.LightningModule):
     """
     The LeNet-5 convolutional model.

@@ -23,26 +23,6 @@ from nero.core.neural_types.axes import AxisKind, AxisType
 from nero.core.neural_types.elements import ClassificationTarget, Index, NormalizedImageValue, StringLabel
 from nero.core.neural_types.neural_type import NeuralType
 
-
-@dataclass
-class MNISTDatasetConfig():
-    """
-    Structured config for MNISTDataset class.
-    Args:
-        height: image height (DEFAULT: 28)
-        width: image width (DEFAULT: 28)
-        data_folder: path to the folder with data, can be relative to user (DEFAULT: "~/data/mnist")
-        train: use train or test splits (DEFAULT: True)
-        name: Name of the module (DEFAULT: None)
-    """
-
-    height: int = 28
-    width: int = 28
-    data_folder: str = "~/data/mnist"
-    train: bool = True
-    download: bool = True
-
-
 class MNISTDataset():
     """
     A "thin wrapper" around the torchvision's MNIST dataset.
