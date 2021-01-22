@@ -1,6 +1,11 @@
 import pyro
+import pyro.distributions as dist
+from pyro import sample
+from torch import tensor
 import math
 import random
+
+from typing import List, Tuple, Callable
 
 class VertexSelectorPolicy(object):
     def __init__(self):
@@ -9,28 +14,31 @@ class VertexSelectorPolicy(object):
     def update(self, Y):
         pass
 
-    def choose_arm(self, context=None):
+    def choose_vertex(self, context=None):
         pass
 
 class RandomVertexSelector(VertexSelectorPolicy):
     """
-    Implementation of a Random Sampler where choosing each arm has equal probability
+    Implementation of a Random Selector where choosing each arm has equal probability
     """
-    def __init__(self, num_actions: int):
-        self.num_actions = num_actions
+    def __init__(self, num_vertices: int):
+        self.num_actions = num_vertices
         self.params = [{"w": 0, "l": 0} for _ in range(self.num_actions)]
         self.arm_selected = 0
+        self.last_vertex = None
         
-    def update(self, Y):
-        if Y == 1:
+    def update_vertex(self, reward: float):
+        # update reward for last_vertex
+        if reward > 1:
             self.params[self.arm_selected]["w"] += 1
         else:
             self.params[self.arm_selected]["l"] += 1
             
-    def choose_arm(self, context=None):
+    def choose_vertex(self):
         # each arm has an equal chance of being selected
-        probs = [1/self.n_bandits] * self.n_bandits
+        probs = [1/self.num_actions] * self.num_actions
         self.arm_selected = sample("arm_selected", dist.Categorical(tensor(probs)))
+        self.last_vertex = self.arm_selected
         return self.arm_selected
 
 
@@ -51,9 +59,10 @@ class Exp3VertexSelector:
 	reward_min: float = 0.0,
 	reward_max: float = 0.1,
         ) -> None:
+        # reward is cost reduction
 
-	self.reward = reward
-	self.num_actions = len(reference_graph_vertices)
+        self.reward = reward
+        self.num_actions = len(reference_graph_vertices)
 
         # exp3: int, (int, int -> float), float -> generator
         # perform the exp3 algorithm.
@@ -61,31 +70,31 @@ class Exp3VertexSelector:
         # rewards is a function (or callable) accepting as input the action and
         # producing as output the reward for that action
         # gamma is an egalitarianism factor
-        weights = [1.0] * num_actions
+        weights = [1.0] * self.num_actions
 
         t = 0
         while True:
-           p = self.distr(weights, gamma)
-           choice = self.draw(probabilityDistribution)
-           theReward = self.reward(choice, t)
-           scaledReward = (theReward - rewardMin) / (rewardMax - rewardMin) # rewards scaled to 0,1
+            p = self.distr(weights, gamma)
+            choice = self.draw(probabilityDistribution)
+            theReward = self.reward(choice, t)
+            scaledReward = (theReward - rewardMin) / (rewardMax - rewardMin) # rewards scaled to 0,1
 
-           estimatedReward = 1.0 * scaledReward / probabilityDistribution[choice]
-           weights[choice] *= math.exp(estimatedReward * gamma / self.num_actions) # important that we use estimated reward here!
+            estimatedReward = 1.0 * scaledReward / probabilityDistribution[choice]
+            weights[choice] *= math.exp(estimatedReward * gamma / self.num_actions) # important that we use estimated reward here!
 
-           yield choice, theReward, estimatedReward, weights
-           t = t + 1
+            yield choice, theReward, estimatedReward, weights
+            t = t + 1
 
     def draw(weights):
-    choice = random.uniform(0, sum(weights))
-    choiceIndex = 0
+        choice = random.uniform(0, sum(weights))
+        choiceIndex = 0
 
-    for weight in weights:
-        choice -= weight
-        if choice <= 0:
-            return choiceIndex
+        for weight in weights:
+            choice -= weight
+            if choice <= 0:
+                return choiceIndex
 
-        choiceIndex += 1
+            choiceIndex += 1
 
     # distr: [float] -> (float)
     # Normalize a list of floats to a probability distribution.  Gamma is an
@@ -107,5 +116,6 @@ class Exp3VertexSelector:
          
 
 if __name__ == '__main__':
-
+    s = RandomVertexSelector(num_actions=10)
+    print(s.choose_arm())
 
