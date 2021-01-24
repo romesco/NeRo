@@ -46,7 +46,7 @@ class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
     def __init__(self, num_vertices: int, epsilon: float) -> None:
         self.num_bandits = num_vertices
         self.rewards = torch.zeros((self.num_bandits)) # rewards all initialized to 0
-        self.p_explore = dist.Bernouli(epsilon) # prob of exploring 
+        self.p_explore = dist.Bernoulli(epsilon) # prob of exploring 
         self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
         self.prev_selected_bandit_idx = None
         
@@ -62,7 +62,7 @@ class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
         if explore:
             selected_bandit_idx = sample("selected_bandit_idx", self.p_bandits).item()
         else:
-            selected_bandit_idx = torch.argmax(self.rewards)
+            selected_bandit_idx = torch.argmax(self.rewards).item()
             # could return the top k instead
             #selected_bandit_idx = torch.topk(self.rewards, k)
 
@@ -161,7 +161,7 @@ class Exp3VertexSelector:
          
 
 if __name__ == '__main__':
-    vs = RandomVertexSelector(num_vertices=10)
+    vs = EpsilonGreedyVertexSelector(num_vertices=10, epsilon=0.7)
     for i in range(10):
         print(vs.select_vertex())
     import ipdb; ipdb.set_trace()
