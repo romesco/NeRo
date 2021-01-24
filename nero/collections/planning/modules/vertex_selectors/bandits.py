@@ -10,13 +10,13 @@ import random
 
 
 class VertexSelectorPolicy(object):
-    def __init__(self):
+    def __init__(self, num_vertices: int) -> None:
         pass
 
-    def update(self, Y):
+    def update_vertex(self, reward: float, vetex_idx: Optional[int] = None) -> None:
         pass
 
-    def choose_vertex(self, context=None):
+    def select_vertex(self) -> int:
         pass
 
 class RandomVertexSelector(VertexSelectorPolicy):
@@ -25,21 +25,66 @@ class RandomVertexSelector(VertexSelectorPolicy):
     """
     def __init__(self, num_vertices: int) -> None:
         self.num_bandits = num_vertices
-        self.rewards = torch.zeros((self.num_bandits))
-        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits))
-        self.prev_chosen_bandit_idx = None
+        self.rewards = torch.zeros((self.num_bandits)) # rewards are unused here
+        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
+        self.prev_selected_bandit_idx = None
         
     def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
-        # rewards is currenty unused
+        pass
+            
+    def select_vertex(self) -> int:
+        selected_bandit_idx = sample("selected_bandit_idx", self.p_bandits).item()
+        self.prev_selected_bandit_idx = selected_bandit_idx
+        return selected_bandit_idx
+    
+
+class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
+    """
+    Greedily selects the highest reward bandit (1-epsilon)% of the time.
+    Explores epsilon% of the time by taking a random action (uniform).
+    """
+    def __init__(self, num_vertices: int, epsilon: float) -> None:
+        self.num_bandits = num_vertices
+        self.rewards = torch.zeros((self.num_bandits)) # rewards all initialized to 0
+        self.p_explore = dist.Bernouli(epsilon) # prob of exploring 
+        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
+        self.prev_selected_bandit_idx = None
+        
+    def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
         if vertex_idx:
             self.rewards[vertex_idx] = reward
         else:
-            self.rewards[self.last_vertex_idx] = reward
+            self.rewards[self.prev_selected_bandit_idx] = reward
             
-    def choose_vertex(self) -> int:
-        chosen_bandit_idx = sample("chosen_bandit", self.p_bandits).item()
-        self.prev_chosen_bandit_idx = chosen_bandit_idx
-        return chosen_bandit_idx
+    def select_vertex(self) -> int:
+        explore = bool(sample("explore", self.p_explore).item())
+
+        if explore:
+            selected_bandit_idx = sample("selected_bandit_idx", self.p_bandits).item()
+        else:
+            selected_bandit_idx = torch.argmax(self.rewards)
+            # could return the top k instead
+            #selected_bandit_idx = torch.topk(self.rewards, k)
+
+        self.prev_selected_bandit_idx = selected_bandit_idx
+        return selected_bandit_idx
+
+
+class ThompsonVertexSelector(VertexSelectorPolicy):
+    """
+    Implementation of Thompson Sampling where our prior is adjusted based on reward assigned to a vertex that.
+    """
+    def __init__(self, num_vertices: int) -> None:
+        self.num_bandits = num_vertices
+        self.rewards = torch.zeros((self.num_bandits))
+        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits))
+        self.prev_selected_bandit_idx = None
+        
+    def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
+        pass
+            
+    def select_vertex(self) -> int:
+        pass
 
 
 class Exp3VertexSelector:
@@ -116,6 +161,8 @@ class Exp3VertexSelector:
          
 
 if __name__ == '__main__':
-    s = RandomVertexSelector(num_vertices=10)
-    print(s.choose_vertex())
+    vs = RandomVertexSelector(num_vertices=10)
+    for i in range(10):
+        print(vs.select_vertex())
+    import ipdb; ipdb.set_trace()
 
