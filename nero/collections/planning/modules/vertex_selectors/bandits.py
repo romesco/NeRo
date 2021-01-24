@@ -1,11 +1,13 @@
+
+from typing import List, Tuple, Callable, Optional
+
+import torch
 import pyro
 import pyro.distributions as dist
 from pyro import sample
-from torch import tensor
 import math
 import random
 
-from typing import List, Tuple, Callable
 
 class VertexSelectorPolicy(object):
     def __init__(self):
@@ -19,27 +21,25 @@ class VertexSelectorPolicy(object):
 
 class RandomVertexSelector(VertexSelectorPolicy):
     """
-    Implementation of a Random Selector where choosing each arm has equal probability
+    Implementation of a Random Selector where choosing each bandit arm has equal probability.
     """
-    def __init__(self, num_vertices: int):
-        self.num_actions = num_vertices
-        self.params = [{"w": 0, "l": 0} for _ in range(self.num_actions)]
-        self.arm_selected = 0
-        self.last_vertex = None
+    def __init__(self, num_vertices: int) -> None:
+        self.num_bandits = num_vertices
+        self.rewards = torch.zeros((self.num_bandits))
+        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits))
+        self.prev_chosen_bandit_idx = None
         
-    def update_vertex(self, reward: float):
-        # update reward for last_vertex
-        if reward > 1:
-            self.params[self.arm_selected]["w"] += 1
+    def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
+        # rewards is currenty unused
+        if vertex_idx:
+            self.rewards[vertex_idx] = reward
         else:
-            self.params[self.arm_selected]["l"] += 1
+            self.rewards[self.last_vertex_idx] = reward
             
-    def choose_vertex(self):
-        # each arm has an equal chance of being selected
-        probs = [1/self.num_actions] * self.num_actions
-        self.arm_selected = sample("arm_selected", dist.Categorical(tensor(probs)))
-        self.last_vertex = self.arm_selected
-        return self.arm_selected
+    def choose_vertex(self) -> int:
+        chosen_bandit_idx = sample("chosen_bandit", self.p_bandits).item()
+        self.prev_chosen_bandit_idx = chosen_bandit_idx
+        return chosen_bandit_idx
 
 
 class Exp3VertexSelector:
@@ -116,6 +116,6 @@ class Exp3VertexSelector:
          
 
 if __name__ == '__main__':
-    s = RandomVertexSelector(num_actions=10)
-    print(s.choose_arm())
+    s = RandomVertexSelector(num_vertices=10)
+    print(s.choose_vertex())
 
