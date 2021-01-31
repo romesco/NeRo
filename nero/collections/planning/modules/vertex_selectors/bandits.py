@@ -15,7 +15,7 @@ class VertexSelectorPolicy(object):
         self.initialized = torch.zeros(self.num_bandits)
         self.rewards = torch.zeros(self.num_bandits) 
         self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
-        self.prev_selected_bandit = None
+        self.prev_selected_bandit = -1 
 
     def update_vertex(self, reward: float, vertex: Optional[int] = None) -> None:
         pass
@@ -23,7 +23,7 @@ class VertexSelectorPolicy(object):
     def select_vertex(self, active_bandits: List[int]) -> int:
         pass
 
-    def reward_float_to_bool(reward: float, threshold: float) -> bool:
+    def reward_float_to_bool(self, reward: float, threshold: float) -> bool:
         if reward > threshold:
             return True
         else:
@@ -32,7 +32,7 @@ class VertexSelectorPolicy(object):
     def reset(self) -> None:
         self.rewards = torch.zeros(self.num_bandits) 
         self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
-        self.prev_selected_bandit_idx = None
+        self.prev_selected_bandit_idx = -1 
 
 
 class RandomVertexSelector(VertexSelectorPolicy):
