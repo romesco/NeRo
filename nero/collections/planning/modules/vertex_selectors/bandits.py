@@ -81,7 +81,7 @@ class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
         self.prev_selected_bandit_idx = selected_bandit_idx
         return selected_bandit_idx
 
-class BernoulliBanditVertexSelector() 
+#class BernoulliBanditVertexSelector() 
 
 
 class UCB1VertexSelector(VertexSelectorPolicy):
