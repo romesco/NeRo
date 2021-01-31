@@ -2,9 +2,9 @@ wrapt
 torch ~= 1.7
 torchvision ~= 0.8.0
 pytorch_lightning ~= 1.0
-pyro
-git+https://github.com/facebookresearch/hydra.git@master
+pyro-ppl
+hydra-core
 git+https://github.com/pytorch/hydra-torch.git@master#subdirectory=hydra-configs-torch
 git+https://github.com/pytorch/hydra-torch.git@master#subdirectory=hydra-configs-torchvision
-git+https://github.com/romesco/hydra-lightning.git@main#subdirectory=hydra-configs-lightning
+git+https://github.com/romesco/hydra-lightning.git@main#subdirectory=hydra-configs-pytorch-lightning
 
