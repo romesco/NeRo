@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='NeRo',
+    name='nero',
     version='0.1.0',
     url='https://github.com/romesco/nero',
     author='Rosario Scalise',
     author_email='rosario@cs.washington.edu',
-    description='Elegantly train robots to do complex tasks.',
-    packages=find_packages('nero.*'),    
+    description='Neural Robotics',
+    packages=find_packages(),    
     install_requires=[],
 )
