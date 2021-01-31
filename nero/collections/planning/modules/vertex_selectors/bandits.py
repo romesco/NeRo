@@ -12,6 +12,7 @@ import random
 class VertexSelectorPolicy(object):
     def __init__(self, num_vertices: int) -> None:
         self.num_bandits = num_vertices
+        self.initialized = torch.zeros(self.num_bandits)
         self.rewards = torch.zeros(self.num_bandits) 
         self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
         self.prev_selected_bandit_idx = None
@@ -19,7 +20,7 @@ class VertexSelectorPolicy(object):
     def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
         pass
 
-    def select_vertex(self) -> int:
+    def select_vertex(self, active_bandits: List[int]) -> int:
         pass
 
     def reward_float_to_bool(reward: float, threshold: float) -> bool:
@@ -44,8 +45,10 @@ class RandomVertexSelector(VertexSelectorPolicy):
     def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
         pass
             
-    def select_vertex(self) -> int:
+    def select_vertex(self, active_bandits: List[int]) -> int:
         selected_bandit_idx = sample("selected_bandit_idx", self.p_bandits).item()
+        while selected_bandit_idx not in active_bandits:
+            selected_bandit_idx = sample("selected_bandit_idx", self.p_bandits).item()
         self.prev_selected_bandit_idx = selected_bandit_idx
         return selected_bandit_idx
     
@@ -77,6 +80,8 @@ class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
 
         self.prev_selected_bandit_idx = selected_bandit_idx
         return selected_bandit_idx
+
+class BernoulliBanditVertexSelector() 
 
 
 class UCB1VertexSelector(VertexSelectorPolicy):
