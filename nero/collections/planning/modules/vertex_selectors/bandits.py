@@ -91,7 +91,6 @@ class UCB1VertexSelector(VertexSelectorPolicy):
     def __init__(self, num_vertices: int, epsilon: float) -> None:
         super().__init__(num_vertices)    
         self.timestep = 0 # introduce time as state in UCB1 (num rounds so far)
-        self.
         
     def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
         if vertex_idx:
