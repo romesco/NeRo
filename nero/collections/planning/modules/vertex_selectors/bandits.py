@@ -11,23 +11,35 @@ import random
 
 class VertexSelectorPolicy(object):
     def __init__(self, num_vertices: int) -> None:
-        pass
+        self.num_bandits = num_vertices
+        self.rewards = torch.zeros(self.num_bandits) 
+        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
+        self.prev_selected_bandit_idx = None
 
-    def update_vertex(self, reward: float, vetex_idx: Optional[int] = None) -> None:
+    def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
         pass
 
     def select_vertex(self) -> int:
         pass
+
+    def reward_float_to_bool(reward: float, threshold: float) -> bool:
+        if reward > threshold:
+            return True
+        else:
+            return False
+
+    def reset() -> None:
+        self.rewards = torch.zeros(self.num_bandits) 
+        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
+        self.prev_selected_bandit_idx = None
+
 
 class RandomVertexSelector(VertexSelectorPolicy):
     """
     Implementation of a Random Selector where choosing each bandit arm has equal probability.
     """
     def __init__(self, num_vertices: int) -> None:
-        self.num_bandits = num_vertices
-        self.rewards = torch.zeros((self.num_bandits)) # rewards are unused here
-        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
-        self.prev_selected_bandit_idx = None
+        super().__init__(num_vertices)
         
     def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
         pass
@@ -44,11 +56,8 @@ class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
     Explores epsilon% of the time by taking a random action (uniform).
     """
     def __init__(self, num_vertices: int, epsilon: float) -> None:
-        self.num_bandits = num_vertices
-        self.rewards = torch.zeros((self.num_bandits)) # rewards all initialized to 0
+        super().__init__(num_vertices)
         self.p_explore = dist.Bernoulli(epsilon) # prob of exploring 
-        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
-        self.prev_selected_bandit_idx = None
         
     def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
         if vertex_idx:
@@ -57,6 +66,37 @@ class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
             self.rewards[self.prev_selected_bandit_idx] = reward
             
     def select_vertex(self) -> int:
+        explore = bool(sample("explore", self.p_explore).item())
+
+        if explore:
+            selected_bandit_idx = sample("selected_bandit_idx", self.p_bandits).item()
+        else:
+            selected_bandit_idx = torch.argmax(self.rewards).item()
+            # could return the top k instead
+            #selected_bandit_idx = torch.topk(self.rewards, k)
+
+        self.prev_selected_bandit_idx = selected_bandit_idx
+        return selected_bandit_idx
+
+
+class UCB1VertexSelector(VertexSelectorPolicy):
+    """
+    Implements UCB1 where score is maintained internally based on reward updates.
+    """
+    def __init__(self, num_vertices: int, epsilon: float) -> None:
+        super().__init__(num_vertices)    
+        self.timestep = 0 # introduce time as state in UCB1 (num rounds so far)
+        self.
+        
+    def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
+        if vertex_idx:
+            self.rewards[vertex_idx] = reward
+        else:
+            self.rewards[self.prev_selected_bandit_idx] = reward
+            
+    def select_vertex(self) -> int:
+        self.timestep += 1
+
         explore = bool(sample("explore", self.p_explore).item())
 
         if explore:
