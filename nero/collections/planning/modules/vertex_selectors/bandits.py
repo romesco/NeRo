@@ -15,9 +15,9 @@ class VertexSelectorPolicy(object):
         self.initialized = torch.zeros(self.num_bandits)
         self.rewards = torch.zeros(self.num_bandits) 
         self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
-        self.prev_selected_bandit_idx = None
+        self.prev_selected_bandit = None
 
-    def update_vertex(self, reward: float, vertex_idx: Optional[int] = None) -> None:
+    def update_vertex(self, reward: float, vertex: Optional[int] = None) -> None:
         pass
 
     def select_vertex(self, active_bandits: List[int]) -> int:
@@ -29,7 +29,7 @@ class VertexSelectorPolicy(object):
         else:
             return False
 
-    def reset() -> None:
+    def reset(self) -> None:
         self.rewards = torch.zeros(self.num_bandits) 
         self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
         self.prev_selected_bandit_idx = None
@@ -205,7 +205,7 @@ class Exp3VertexSelector:
          
 
 if __name__ == '__main__':
-    vs = EpsilonGreedyVertexSelector(num_vertices=10, epsilon=0.7)
+    vs = RandomVertexSelector(num_vertices=10, epsilon=0.7)
     for i in range(10):
         print(vs.select_vertex())
     import ipdb; ipdb.set_trace()
