@@ -51,7 +51,36 @@ class RandomVertexSelector(VertexSelectorPolicy):
             selected_bandit_idx = sample("selected_bandit_idx", self.p_bandits).item()
         self.prev_selected_bandit_idx = selected_bandit_idx
         return selected_bandit_idx
-    
+
+class BetaVertexSelector(VertexSelectorPolicy):
+    """
+    """
+    def __init__(self, num_vertices: int, r_thresh: float = 10.) -> None:
+        super().__init__(num_vertices)
+        self.r_thresh = r_thresh 
+        self.p_bandits = torch.zeros(self.num_bandits)
+        self.params = torch.ones((self.num_bandits,2))
+        
+        
+    def update_vertex(self, reward: float, vertex_idx: int = None, increment: int = 1) -> None:
+        if reward > self.r_thresh:
+            # increment alpha
+            self.params[vertex_idx,0] += increment
+        else:
+            # increment beta
+            self.params[vertex_idx,1] += increment 
+
+            
+    def select_vertex(self, active_bandits: List[int]) -> int:
+        for i in range(self.num_bandits):
+            self.p_bandits[i] = pyro.sample(f"bandit{i}_cost", dist.Beta(self.params[i,0], self.params[i,1]))
+        _, ranked_bandit_idxs = torch.topk(self.p_bandits, self.num_bandits)
+        ranked_bandit_idxs = ranked_bandit_idxs.cpu().numpy().tolist()
+
+        best_valid_bandit_idx = None
+        while ranked_bandit_idxs and ranked_bandit_idxs[0] in active_bandits:
+            best_valid_bandit_idx = ranked_bandit_idxs.pop()
+        return best_valid_bandit_idx
 
 class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
     """
@@ -205,8 +234,12 @@ class Exp3VertexSelector:
          
 
 if __name__ == '__main__':
-    vs = RandomVertexSelector(num_vertices=10, epsilon=0.7)
+    vs = BetaVertexSelector(num_vertices=10)
     for i in range(10):
-        print(vs.select_vertex())
+        print(vs.select_vertex(range(0,10)))
+    for i in range(100):
+        vs.update_vertex(200, 5)
+    for i in range(10):
+        print(vs.select_vertex(range(0,10)))
     import ipdb; ipdb.set_trace()
 
