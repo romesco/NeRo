@@ -81,7 +81,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
         print(f"ACTIVE BANDITS: {active_bandits}")
         for idx in ranked_bandit_idxs:
             if idx in active_bandits:
-                best_balid_bandit_idx = idx
+                best_valid_bandit_idx = idx
                 break
 
         # update bandits
@@ -245,10 +245,10 @@ class Exp3VertexSelector:
 if __name__ == '__main__':
     vs = BetaVertexSelector(num_vertices=10)
     for i in range(10):
-        print(vs.select_vertex(range(0,10)))
+        print(vs.select_vertex([i for i in range(0,10)]))
     for i in range(100):
         vs.update_vertex(200, 5)
     for i in range(10):
-        print(vs.select_vertex(range(0,10)))
+        print(vs.select_vertex([i for i in range(0,10)]))
     import ipdb; ipdb.set_trace()
 
