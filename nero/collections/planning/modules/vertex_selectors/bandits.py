@@ -88,7 +88,6 @@ class BetaVertexSelector(VertexSelectorPolicy):
         # only increment beta when the bandit is pulled
         self.params[best_valid_bandit_idx,1] += 1
 
-        assert best_valid_bandit_idx
         return best_valid_bandit_idx
 
 class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
