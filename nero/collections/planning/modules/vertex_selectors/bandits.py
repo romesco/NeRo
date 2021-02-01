@@ -77,8 +77,6 @@ class BetaVertexSelector(VertexSelectorPolicy):
         ranked_bandit_idxs = ranked_bandit_idxs.cpu().numpy().tolist()
 
         best_valid_bandit_idx = None
-        print(f"RANKED BANDITS: {ranked_bandit_idxs}")
-        print(f"ACTIVE BANDITS: {active_bandits}")
         for idx in ranked_bandit_idxs:
             if idx in active_bandits:
                 best_valid_bandit_idx = idx
