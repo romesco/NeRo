@@ -54,6 +54,7 @@ class RandomVertexSelector(VertexSelectorPolicy):
 
 class BetaVertexSelector(VertexSelectorPolicy):
     """
+    Model each bandit as a beta distribution and run a form of Thompson sampling. 
     """
     def __init__(self, num_vertices: int, r_thresh: float = 10.) -> None:
         super().__init__(num_vertices)
@@ -63,15 +64,13 @@ class BetaVertexSelector(VertexSelectorPolicy):
         
         
     def update_vertex(self, reward: float, vertex_idx: int = None, increment: int = 1) -> None:
-        if reward > self.r_thresh:
-            # increment alpha
-            self.params[vertex_idx,0] += increment
-        else:
-            # increment beta
-            self.params[vertex_idx,1] += increment 
+        pass
 
             
     def select_vertex(self, active_bandits: List[int]) -> int:
+        # check that active bandits is not empty
+        assert active_bandits
+
         for i in range(self.num_bandits):
             self.p_bandits[i] = pyro.sample(f"bandit{i}_cost", dist.Beta(self.params[i,0], self.params[i,1]))
         _, ranked_bandit_idxs = torch.topk(self.p_bandits, self.num_bandits)
@@ -80,6 +79,11 @@ class BetaVertexSelector(VertexSelectorPolicy):
         best_valid_bandit_idx = None
         while ranked_bandit_idxs and ranked_bandit_idxs[0] in active_bandits:
             best_valid_bandit_idx = ranked_bandit_idxs.pop()
+
+        # update bandits
+        # only increment beta when the bandit is pulled
+        self.params[best_valid_bandit_idx,1] += 1
+
         return best_valid_bandit_idx
 
 class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
