@@ -31,7 +31,7 @@ class VertexSelectorPolicy(object):
 
     def reset(self) -> None:
         self.rewards = torch.zeros(self.num_bandits) 
-        self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
+        #self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
         self.prev_selected_bandit_idx = -1 
 
 
@@ -77,13 +77,18 @@ class BetaVertexSelector(VertexSelectorPolicy):
         ranked_bandit_idxs = ranked_bandit_idxs.cpu().numpy().tolist()
 
         best_valid_bandit_idx = None
-        while ranked_bandit_idxs and ranked_bandit_idxs[0] in active_bandits:
-            best_valid_bandit_idx = ranked_bandit_idxs.pop()
+        print(f"RANKED BANDITS: {ranked_bandit_idxs}")
+        print(f"ACTIVE BANDITS: {active_bandits}")
+        for idx in ranked_bandit_idxs:
+            if idx in active_bandits:
+                best_balid_bandit_idx = idx
+                break
 
         # update bandits
         # only increment beta when the bandit is pulled
         self.params[best_valid_bandit_idx,1] += 1
 
+        assert best_valid_bandit_idx
         return best_valid_bandit_idx
 
 class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
