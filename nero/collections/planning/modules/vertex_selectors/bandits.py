@@ -77,7 +77,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
 
         # only on the first update_vertex() call:
         if self.prev_selected_bandit_idx == -1:
-            costs[:] = cost
+            self.costs[:] = cost
         else:
             # update bandits
             # only increment beta when the bandit is pulled
