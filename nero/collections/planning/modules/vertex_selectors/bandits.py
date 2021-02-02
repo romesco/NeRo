@@ -75,17 +75,22 @@ class BetaVertexSelector(VertexSelectorPolicy):
         
     def update_vertex(self, cost: float, increment: int = 1) -> None:
 
-        # update bandits
-        # only increment beta when the bandit is pulled
-        if cost < cost[self.prev_selected_bandit_idx]:
-            # increase alpha 
-            self.dist_params[self.prev_selected_bandit_idx,0] += 1
+        # only on the first update_vertex() call:
+        if self.prev_selected_bandit_idx =- -1:
+            costs[:] = cost
+        
         else:
-            # increase beta 
-            self.dist_params[self.prev_selected_bandit_idx,1] += 1
+            # update bandits
+            # only increment beta when the bandit is pulled
+            if cost < cost[self.prev_selected_bandit_idx]:
+                # increase alpha 
+                self.dist_params[self.prev_selected_bandit_idx,0] += 1
+            else:
+                # increase beta 
+                self.dist_params[self.prev_selected_bandit_idx,1] += 1
 
-        # update current cost array 
-        costs[self.prev_selected_bandit_idx] = cost 
+            # update current cost array 
+            costs[self.prev_selected_bandit_idx] = cost 
 
             
     def select_vertex(self, active_bandits: List[int]) -> int:
