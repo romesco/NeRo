@@ -76,7 +76,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
     def update_vertex(self, cost: float, increment: int = 1) -> None:
 
         # only on the first update_vertex() call:
-        if self.prev_selected_bandit_idx =- -1:
+        if self.prev_selected_bandit_idx == -1:
             costs[:] = cost
         
         else:
