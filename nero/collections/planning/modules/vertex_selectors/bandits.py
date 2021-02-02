@@ -4,12 +4,12 @@ import math
 import random
 import copy
 
+import numpy as np
 import torch
 import pyro
 import pyro.distributions as dist
 from pyro import sample
 
-from nero.core.utils import get_project_root
 
 
 class VertexSelectorPolicy(object):
@@ -34,9 +34,10 @@ class VertexSelectorPolicy(object):
         else:
             return False
 
-    def write_history_to_file(self, filename: str = 'dist_params_logs.pt') -> None:
-        ROOT_DIR = get_project_root() 
-        torch.save(torch.stack(self.dist_params_history), os.path.join(ROOT_DIR,"viz/logs/",filename))
+    def write_history_to_file(self, filepath: str = '.', filename: str = 'dist_params_history') -> None:
+        f = os.path.join(filepath,filename) 
+        torch.save(torch.stack(self.dist_params_history), f+'.pt')
+        np.savetxt(f+'.txt', np.vstack(self.dist_params_history), fmt='%d')
 
     def reset(self) -> None:
         self.rewards = torch.zeros(self.num_bandits) 
@@ -67,13 +68,15 @@ class BetaVertexSelector(VertexSelectorPolicy):
     """
     def __init__(self, num_vertices: int, r_thresh: float = 10.) -> None:
         super().__init__(num_vertices)
-        self.r_thresh = r_thresh 
         self.p_bandits = torch.zeros(self.num_bandits)
         self.dist_params = torch.ones((self.num_bandits,2))
+        self.costs = torch.zeros(self.num_bandits)
         
         
-    def update_vertex(self, reward: float, vertex_idx: int = None, increment: int = 1) -> None:
-        pass
+    def update_vertex(self, cost: float, increment: int = 1) -> None:
+        costs[self.prev_selected_bandit_idx] = cost 
+
+
 
             
     def select_vertex(self, active_bandits: List[int]) -> int:
@@ -100,6 +103,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
         self.dist_params[best_valid_bandit_idx,1] += 1
 
         return best_valid_bandit_idx
+
 
 class EpsilonGreedyVertexSelector(VertexSelectorPolicy):
     """
@@ -252,8 +256,11 @@ class Exp3VertexSelector:
        return 0 if count == 0 else theSum / count
 
 if __name__ == '__main__':
+    from nero.core.utils import get_project_root
+    ROOTDIR = get_project_root()
+
     vs = BetaVertexSelector(num_vertices=10)
     for i in range(3):
         print(vs.select_vertex([i for i in range(0,10)]))
-    vs.write_history_to_file('dist_params_logs.pt')
-
+    filepath = os.path.join(ROOTDIR, 'viz/logs')
+    vs.write_history_to_file(filepath=filepath)
