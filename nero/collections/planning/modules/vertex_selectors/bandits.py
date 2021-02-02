@@ -2,6 +2,7 @@ from typing import List, Tuple, Callable, Optional
 import os
 import math
 import random
+import copy
 
 import torch
 import pyro
@@ -34,6 +35,7 @@ class VertexSelectorPolicy(object):
             return False
 
     def write_history_to_file(self, filename: str = 'dist_params_logs.pt') -> None:
+        import ipdb; ipdb.set_trace()
         ROOT_DIR = get_project_root() 
         torch.save(torch.stack(self.dist_params_history), os.path.join(ROOT_DIR,"viz/logs/",filename))
 
@@ -91,7 +93,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
                 break
 
         # write params to history tensor (for logging)
-        self.dist_params_history.append(self.dist_params)
+        self.dist_params_history.append(copy.deepcopy(self.dist_params))
 
         
         # update bandits
@@ -249,29 +251,6 @@ class Exp3VertexSelector:
           count += 1
 
        return 0 if count == 0 else theSum / count
-
-def plot_history(filename):
-    import matplotlib
-    import matplotlib.pyplot as plt
-    matplotlib.use("TkAgg")
-    plt.ion()
-    dist_params_history = torch.load(filename)
-
-    d = dist.Beta(*dist_params_history[0][0])
-    
-    support = torch.arange(0, 1, 0.001).detach()
-    prob = d.sample(support.shape).detach()
-    fig = plt.figure()
-    print('done')
-    plt.plot(support.numpy(), prob.numpy())
-    plt.savefig()
-    plt.xlim(0, support.numpy().max())
-    plt.ylim(0, prob.numpy().max() * 1.05)
-    plt.xlabel('support')
-    plt.ylabel('p')
-    plt.title('Beta function')
-    plt.tight_layout();
-         
 
 if __name__ == '__main__':
     vs = BetaVertexSelector(num_vertices=10)
