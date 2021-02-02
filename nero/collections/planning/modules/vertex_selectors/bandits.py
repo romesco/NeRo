@@ -70,7 +70,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
         super().__init__(num_vertices)
         self.p_bandits = torch.zeros(self.num_bandits)
         self.dist_params = torch.ones((self.num_bandits,2))
-        self.costs = torch.zeros(self.num_bandits)
+        self.costs = 99999*torch.ones(self.num_bandits)
         
         
     def update_vertex(self, cost: float, increment: int = 1) -> None:
@@ -106,7 +106,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
         # write params to history tensor (for logging)
         self.dist_params_history.append(copy.deepcopy(self.dist_params))
 
-
+        self.prev_selected_bandit_idx = best_valid_bandit_idx
         return best_valid_bandit_idx
 
 
