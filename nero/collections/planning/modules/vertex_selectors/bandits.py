@@ -35,7 +35,6 @@ class VertexSelectorPolicy(object):
             return False
 
     def write_history_to_file(self, filename: str = 'dist_params_logs.pt') -> None:
-        import ipdb; ipdb.set_trace()
         ROOT_DIR = get_project_root() 
         torch.save(torch.stack(self.dist_params_history), os.path.join(ROOT_DIR,"viz/logs/",filename))
 
