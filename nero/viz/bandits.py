@@ -18,16 +18,20 @@ def plot_bandits(dist_params_history):
     fig = plt.figure()
     support = torch.arange(-0.1, 1.1, 0.001).detach()
     
+    max_y = 0
     for b in range(num_bandits):
         print(b)
         d = dist.Beta(*dist_params_history[0][b])
         prob = d.log_prob(support).detach().exp()
         plt.plot(support.numpy(), prob.numpy())
+        max_yb = prob.numpy()[~np.isnan(prob.numpy())].max()
+        if max_yb > max_y:
+            max_y = max_yb
         
 
 
     plt.xlim(-0.1, 1.1)
-    plt.ylim(0, prob.numpy()[~np.isnan(prob.numpy())].max()*1.05)
+    plt.ylim(0, max_y*1.05) 
     plt.xlabel('support')
     plt.ylabel('p')
     plt.title('Beta function')
