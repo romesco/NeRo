@@ -69,7 +69,10 @@ class BetaVertexSelector(VertexSelectorPolicy):
     def __init__(self, num_vertices: int, r_thresh: float = 10.) -> None:
         super().__init__(num_vertices)
         self.p_bandits = torch.zeros(self.num_bandits)
-        self.dist_params = torch.ones((self.num_bandits,2))
+        self.dist_params = torch.ones((self.num_bandits, 2))
+        # TODO(romesc): Cost functions and parameter updates are WIP.
+        self.dist_params[0][1] = 10
+        self.dist_params[1][1] = 10
         self.costs = 99999*torch.ones(self.num_bandits)
         
         
@@ -77,20 +80,19 @@ class BetaVertexSelector(VertexSelectorPolicy):
 
         # only on the first update_vertex() call:
         if self.prev_selected_bandit_idx == -1:
-            costs[:] = cost
-        
+            self.costs[:] = cost
         else:
             # update bandits
             # only increment beta when the bandit is pulled
+            print("Updating Vertex in Python")
             if cost < self.costs[self.prev_selected_bandit_idx]:
                 # increase alpha 
-                self.dist_params[self.prev_selected_bandit_idx,0] += 1
+                self.dist_params[self.prev_selected_bandit_idx, 0] += 1
+                # ceil all the bandit costs
+                self.costs[:] = cost
             else:
                 # increase beta 
                 self.dist_params[self.prev_selected_bandit_idx,1] += 1
-
-            # update current cost array 
-            self.costs[self.prev_selected_bandit_idx] = cost 
 
             
     def select_vertex(self, active_bandits: List[int]) -> int:
