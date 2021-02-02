@@ -1,21 +1,25 @@
-
 from typing import List, Tuple, Callable, Optional
+import os
+import math
+import random
 
 import torch
 import pyro
 import pyro.distributions as dist
 from pyro import sample
-import math
-import random
+
+from nero.core.utils import get_project_root
 
 
 class VertexSelectorPolicy(object):
     def __init__(self, num_vertices: int) -> None:
+        pyro.set_rng_seed(1)
         self.num_bandits = num_vertices
         self.initialized = torch.zeros(self.num_bandits)
         self.rewards = torch.zeros(self.num_bandits) 
         self.p_bandits = dist.Categorical(torch.tensor([1/self.num_bandits]*self.num_bandits)) # Discrete Uniform
         self.prev_selected_bandit_idx = -1 
+        self.dist_params_history = []
 
     def update_vertex(self, reward: float, vertex: Optional[int] = None) -> None:
         pass
@@ -28,6 +32,10 @@ class VertexSelectorPolicy(object):
             return True
         else:
             return False
+
+    def write_history_to_file(self, filename: str = 'dist_params_logs.pt') -> None:
+        ROOT_DIR = get_project_root() 
+        torch.save(torch.stack(self.dist_params_history), os.path.join(ROOT_DIR,"viz/logs/",filename))
 
     def reset(self) -> None:
         self.rewards = torch.zeros(self.num_bandits) 
@@ -60,7 +68,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
         super().__init__(num_vertices)
         self.r_thresh = r_thresh 
         self.p_bandits = torch.zeros(self.num_bandits)
-        self.params = torch.ones((self.num_bandits,2))
+        self.dist_params = torch.ones((self.num_bandits,2))
         
         
     def update_vertex(self, reward: float, vertex_idx: int = None, increment: int = 1) -> None:
@@ -72,7 +80,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
         assert active_bandits
 
         for i in range(self.num_bandits):
-            self.p_bandits[i] = pyro.sample(f"bandit{i}_cost", dist.Beta(self.params[i,0], self.params[i,1]))
+            self.p_bandits[i] = pyro.sample(f"bandit{i}_cost", dist.Beta(*self.dist_params[i]))
         _, ranked_bandit_idxs = torch.topk(self.p_bandits, self.num_bandits)
         ranked_bandit_idxs = ranked_bandit_idxs.cpu().numpy().tolist()
 
@@ -82,9 +90,13 @@ class BetaVertexSelector(VertexSelectorPolicy):
                 best_valid_bandit_idx = idx
                 break
 
+        # write params to history tensor (for logging)
+        self.dist_params_history.append(self.dist_params)
+
+        
         # update bandits
         # only increment beta when the bandit is pulled
-        self.params[best_valid_bandit_idx,1] += 1
+        self.dist_params[best_valid_bandit_idx,1] += 1
 
         return best_valid_bandit_idx
 
@@ -237,15 +249,33 @@ class Exp3VertexSelector:
           count += 1
 
        return 0 if count == 0 else theSum / count
+
+def plot_history(filename):
+    import matplotlib
+    import matplotlib.pyplot as plt
+    matplotlib.use("TkAgg")
+    plt.ion()
+    dist_params_history = torch.load(filename)
+
+    d = dist.Beta(*dist_params_history[0][0])
+    
+    support = torch.arange(0, 1, 0.001).detach()
+    prob = d.sample(support.shape).detach()
+    fig = plt.figure()
+    print('done')
+    plt.plot(support.numpy(), prob.numpy())
+    plt.savefig()
+    plt.xlim(0, support.numpy().max())
+    plt.ylim(0, prob.numpy().max() * 1.05)
+    plt.xlabel('support')
+    plt.ylabel('p')
+    plt.title('Beta function')
+    plt.tight_layout();
          
 
 if __name__ == '__main__':
     vs = BetaVertexSelector(num_vertices=10)
-    for i in range(10):
+    for i in range(3):
         print(vs.select_vertex([i for i in range(0,10)]))
-    for i in range(100):
-        vs.update_vertex(200, 5)
-    for i in range(10):
-        print(vs.select_vertex([i for i in range(0,10)]))
-    import ipdb; ipdb.set_trace()
+    vs.write_history_to_file('dist_params_logs.pt')
 
