@@ -79,7 +79,7 @@ class BetaVertexSelector(VertexSelectorPolicy):
         # only increment beta when the bandit is pulled
         if cost < cost[self.prev_selected_bandit_idx]:
             # increase alpha 
-            self.dist_params[self.prev_selected_bandit_idx,1] += 1
+            self.dist_params[self.prev_selected_bandit_idx,0] += 1
         else:
             # increase beta 
             self.dist_params[self.prev_selected_bandit_idx,1] += 1
