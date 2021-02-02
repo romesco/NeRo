@@ -36,7 +36,7 @@ class VertexSelectorPolicy(object):
 
     def write_history_to_file(self, filename: str = 'dist_params_logs.pt') -> None:
         ROOT_DIR = get_project_root() 
-        torch.save(torch.stack(self.dist_params_history), os.path.join(ROOT_DIR,"viz/logs/",filename))
+        torch.save(torch.stack(self.dist_params_history), os.path.join(filename))
 
     def reset(self) -> None:
         self.rewards = torch.zeros(self.num_bandits) 
