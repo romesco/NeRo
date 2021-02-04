@@ -22,12 +22,13 @@ def plot_bandits(dist_params_history):
     for r in range(num_rounds):
         for b in range(num_bandits):
             print(b)
-            d = dist.Beta(*dist_params_history[0][b])
+            d = dist.Beta(*dist_params_history[r][b])
             prob = d.log_prob(support).detach().exp()
-            plt.plot(support.numpy(), prob.numpy())
+            plt.plot(support.numpy(), prob.numpy(), label=str(b))
             max_yb = prob.numpy()[~np.isnan(prob.numpy())].max()
             if max_yb > max_y:
                 max_y = max_yb
+        plt.legend()
         plt.xlim(-0.1, 1.1)
         plt.ylim(0, max_y*1.05) 
         plt.xlabel('support')
