@@ -35,6 +35,8 @@ class VertexSelectorPolicy(object):
             return False
 
     def write_history_to_file(self, filepath: str = '.', filename: str = 'dist_params_history') -> None:
+        if not self.dist_params_history:
+            return
         f = os.path.join(filepath,filename) 
         torch.save(torch.stack(self.dist_params_history), f+'.pt')
         np.savetxt(f+'.txt', np.vstack(self.dist_params_history), fmt='%d')
