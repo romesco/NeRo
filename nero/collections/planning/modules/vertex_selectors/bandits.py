@@ -197,6 +197,46 @@ class ThompsonVertexSelector(VertexSelectorPolicy):
     def select_vertex(self) -> int:
         pass
 
+class CustomExp3VertexSelector(VertexSelectorPolicy):
+    def __init__(self, num_vertices: int, gamma: float = 0.5) -> None:
+        super().__init__(num_vertices)
+        self.p_bandits = torch.zeros(self.num_bandits)
+        self.weights = torch.ones(self.num_bandits)
+        self.gamma = gamma
+
+    def update_vertex(self, cost: float, bandit_update: int = 0) -> None:
+        # reward = fractional change in the cost.
+        if self.prev_selected_bandit_idx == -1 or bandit_update == 0:
+            self.cost = cost
+        else:
+            reward = (self.cost - cost) / self.cost
+            estimated_reward = reward / self.p_bandits[self.prev_selected_bandit_idx]
+            self.weights[self.prev_selected_bandit_idx] *= math.exp(estimated_reward * self.gamma / self.num_bandits)
+    
+    def draw(self, weights) -> int:
+        choice = random.uniform(0, sum(weights))
+        choiceIndex = 0
+
+        for weight in weights:
+            choice -= weight
+            if choice <= 0:
+                return choiceIndex
+
+            choiceIndex += 1
+
+    def select_vertex(self, active_bandits: List[int]) -> int:
+        # check that active bandits is not empty
+        assert active_bandits
+
+        # set the probabilities
+        wsum = float(sum(self.weights))
+        for i in range(self.num_bandits):
+            self.p_bandits[i] = (1.0 - self.gamma)*(self.weights[i]/wsum) + self.gamma/self.num_bandits
+        selected_bandit_idx = self.draw(self.weights)
+        while selected_bandit_idx not in active_bandits:
+            selected_bandit_idx = self.draw(self.weights)
+        self.prev_selected_bandit_idx = selected_bandit_idx
+        return selected_bandit_idx
 
 class Exp3VertexSelector:
     """
